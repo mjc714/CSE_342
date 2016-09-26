@@ -73,6 +73,7 @@ public class UDPEchoClient {
                     }
                     //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
+                    clientSocket.send(sendDatagramPacket);
                 }
 
                 //clear out old send buffer
@@ -84,6 +85,7 @@ public class UDPEchoClient {
                 }
                 //send last packet to gateway to be forwarded to server
                 sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
+                clientSocket.send(sendDatagramPacket);
 
                 /*
                  take payload array and execute stop/wait ARQ

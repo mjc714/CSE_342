@@ -68,14 +68,14 @@ public class UDPEchoGateway {
                     System.out.println("Receiving from client\n");
                     clientIPAddress = pack.getAddress();
                     clientPort = pack.getPort();
-                    if (dropChance > usrDropChance) { //check userdrop rate against randomly generated drop rate
+                    if (dropChance < usrDropChance) { //check userdrop rate against randomly generated drop rate
                         pack = new DatagramPacket(pack.getData(), pack.getData().length, serverIPAddress, serverPort);
                         sock.send(pack);
                         System.out.println("Packet sent to server: " + serverIPAddress + "\n");
                     }
                 } else if (pack.getAddress().equals(serverIPAddress) && clientPort != 0) {
                     System.out.println("Receiving from server\n");
-                    if (dropChance > usrDropChance) { //check userdrop rate against randomly generated drop rate
+                    if (dropChance < usrDropChance) { //check userdrop rate against randomly generated drop rate
                         pack = new DatagramPacket(pack.getData(), pack.getData().length, clientIPAddress, clientPort);
                         sock.send(pack);
                         System.out.println("Packet sent to client: " + clientIPAddress + "\n");
