@@ -1,5 +1,4 @@
-File Edit Options Buffers Tools Java Help
-    import java.io.*;
+import java.io.*;
 import java.nio.file.Files;
 import java.net.*;
 import java.util.*;
@@ -142,4 +141,3 @@ public class UDPEchoClient {
 	}
     }
 }
-		-UU-:**--F1  UDPEchoClient.java   Top L1     (Java/l Abbrev)--------------------------------------------------------------------------
