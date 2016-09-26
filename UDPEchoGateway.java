@@ -31,7 +31,7 @@ public class UDPEchoGateway {
 
         if (args.length != 4) {
             System.out.println("args.length is " + args.length + "\n");
-            System.out.println("Usage: java UDPEchoGateway <gateway-port: 12345> <server-ip: x.x.x.x> <server-port: 12345> <drop-chance(0-100)> 10\n");
+            System.out.println("Usage: java UDPEchoGateway <gateway-port: 12345> <server-ip: x.x.x.x> <server-port: 12345> <drop-chance(0-100): 10 (101++ guarantees no drops)>\n");
             System.exit(1);
         }
 
