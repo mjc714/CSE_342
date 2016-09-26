@@ -6,7 +6,7 @@ import java.util.Random;
  * UDPEchoGateway to store and forward packets from client --> server can be
  * configured to drop % packets
  *
- * @author Matthew
+ * @author Matthew - mjc714
  */
 public class UDPEchoGateway {
 

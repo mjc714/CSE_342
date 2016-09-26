@@ -6,7 +6,7 @@ import java.net.*;
  * UDPEchoClient Class reads in a file, splits it into n datagrams each of 20
  * bytes where the first byte is a seqNum
  *
- * @author Matthew
+ * @author Matthew - mjc714
  */
 public class UDPEchoClient {
 
