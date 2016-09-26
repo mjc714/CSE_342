@@ -59,7 +59,7 @@ public class UDPEchoServer {
         try {
             while (true) {
 
-                sock.setSoTimeout(5000);
+                sock.setSoTimeout(90000); //90 seconds to setup client/gateway on separate machine to initiate file transfer
                 sock.receive(pack);
 
                 System.out.println("Received packet " + seqNum + " from " + pack.getAddress());
