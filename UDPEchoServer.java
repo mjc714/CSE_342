@@ -57,10 +57,10 @@ public class UDPEchoServer {
         }
 
         try {
-            while (!done) {
+            while (true) {
 
-                sock.receive(pack);
                 sock.setSoTimeout(5000);
+                sock.receive(pack);
 
                 System.out.println("Received packet " + seqNum + " from " + pack.getAddress());
                 //send an ack message back to client
@@ -71,15 +71,15 @@ public class UDPEchoServer {
                     fos.write(pack.getData());
                 }
             }
-
-            //close file output stream
-            fos.close();
         } catch (SocketException ex) {
+            try {
+                fos.close();
+            } catch (IOException ioex) {
+                System.out.println(ioex);
+            }
             sock.close();
         } catch (IOException ex) {
             System.out.println(ex);
         }
-        //close server socket
-        sock.close();
     }
 }
