@@ -2,33 +2,29 @@
 import java.io.*;
 import java.net.*;
 
+/**
+ * UDPEchoServer that receives a n datagram packets from the gateway which
+ * received it from a client, server appends datagrams and writes to new file
+ *
+ * @author Matthew
+ */
 public class UDPEchoServer {
 
     public static void main(String[] args) {
-        int BUFFERSIZE = 256;
+
         DatagramSocket sock;
-
-        int serverPort;
-        //DatagramPacket pack = new DatagramPacket(new byte[BUFFERSIZE], BUFFERSIZE);
         DatagramPacket pack = new DatagramPacket(new byte[20], 20);
-
         DatagramPacket ack;
 
         byte[] ackMsg = new byte[1];
 
-        //Path file = Paths.get("CSE342Recvd.txt");
         FileOutputStream fos = null;
 
-	//buffer to store received bytes
+        //buffer to store received bytes
         //479 used as testing, implement robustness
-        byte[][] recvdBytes = new byte[24][19];
         int seqNum = 0;
         int indexTrack = 0;
-
-        /* seperate counter for recvdBytes to rememeber where it left off reading
-         bytes from the socket
-         */
-        int temp = 0;
+        int serverPort = 0;
 
         boolean done = false;
 
@@ -62,38 +58,24 @@ public class UDPEchoServer {
 
         try {
             while (!done) {
-                /*
-                 this should get an array of byte data from pack
-                 we then store pack.getData()[0] in trackIndex, which should be the seqNum,
-                 into the corresponding index in recvdBytes for ordering
-                 recvdBytes[trackIndex][i-1], thus ensuring the
-                 correct assembly order of the file.
-                 */
 
                 sock.receive(pack);
+                sock.setSoTimeout(5000);
+
                 System.out.println("Received packet " + seqNum + " from " + pack.getAddress());
                 //send an ack message back to client
-                ack = new DatagramPacket(ackMsg, ackMsg.length, pack.getAddress(), pack.getPort());
-                sock.send(ack);
+                //ack = new DatagramPacket(ackMsg, ackMsg.length, pack.getAddress(), pack.getPort());
+                //sock.send(ack);
 
                 for (int i = 1; i < 20; i++) {
-                    recvdBytes[seqNum][i - 1] = pack.getData()[i];
+                    fos.write(pack.getData());
                 }
-                seqNum++;
-                if (seqNum == 24) {
-                    done = true;
-                }
-            }
-
-            seqNum = 0;
-
-            //write rcvdBytes to file
-            while (seqNum < 24) {
-                fos.write(recvdBytes[seqNum]);
             }
 
             //close file output stream
             fos.close();
+        } catch (SocketException ex) {
+            sock.close();
         } catch (IOException ex) {
             System.out.println(ex);
         }
