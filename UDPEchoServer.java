@@ -58,6 +58,7 @@ public class UDPEchoServer {
         }
 
         try {
+            sock.setSoTimeout(30000);
             while (true) {
                 sock.receive(pack); //get the packet from the Gateway
                 if (pack.getData()[0] != 25) { //we do not have the last datagram
@@ -78,19 +79,18 @@ public class UDPEchoServer {
                 //ack = new DatagramPacket(ackMsg, ackMsg.length, pack.getAddress(), pack.getPort());
                 //sock.send(ack);
             }
-
-            //write to "CSE342Rcvd.txt"
-            fos.write(rcvdBuffer);
-
+            //here we rely on the socket timeout to occur after 30 seconds
         } catch (SocketException ex) {
-            try {
-                fos.close();
-            } catch (IOException ioex) {
-                System.out.println(ioex);
-            }
+            System.out.println(ex);
         } catch (IOException ex) {
             System.out.println(ex);
+        } finally { //after the socket timeout, write to file and close the filestream
+            try {
+                fos.write(rcvdBuffer);
+                fos.close();
+            } catch (IOException iox) {
+                System.out.println(iox);
+            }
         }
-        sock.close();
     }
 }
