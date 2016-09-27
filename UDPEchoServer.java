@@ -81,7 +81,7 @@ public class UDPEchoServer {
             }
             //here we rely on the socket timeout to occur after 30 seconds
         } catch (SocketException ex) {
-            System.out.println(ex);
+            System.out.println(ex + "\nWriting buffer to file now.\n");
         } catch (IOException ex) {
             System.out.println(ex);
         } finally { //after the socket timeout, write to file and close the filestream
