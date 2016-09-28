@@ -41,7 +41,7 @@ public class UDPEchoGateway {
         } catch (UnknownHostException e) {
             System.out.println(e);
         }
-
+	
         gatewayPort = (new Integer(args[0]));
         System.out.println("gateway port is " + gatewayPort + "\n");
 
@@ -56,7 +56,7 @@ public class UDPEchoGateway {
 
         //convert string arg into double value
         usrDropChance = Integer.valueOf(args[3]);
-
+	
         while (true) {
             dropChance = rand.nextInt(100) + 1;
             //System.out.println("Drop chance: " + dropChance + "\n");
