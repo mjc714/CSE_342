@@ -1,6 +1,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 /**
  * UDPEchoServer that receives a n datagram packets from the gateway which
@@ -15,9 +16,10 @@ public class UDPEchoServer {
         DatagramSocket sock;
         DatagramPacket pack = new DatagramPacket(new byte[20], 20);
         DatagramPacket ack;
-	
+
         byte[] ackMsg = new byte[1];
         byte[] rcvdBuffer = new byte[479];
+        ArrayList<Integer> dupCheck = new ArrayList<>(26);
 
         FileOutputStream fos = null;
 
@@ -56,36 +58,43 @@ public class UDPEchoServer {
         } catch (FileNotFoundException ex) {
             System.out.println(ex);
         }
-	
+
         try {
             //sock.setSoTimeout(30000);
             while (true) {
                 sock.receive(pack); //get the packet from the Gateway
-		if (pack.getData()[0] != 25) { //we do not have the last datagram
+                if (pack.getData()[0] != 25) { //we do not have the last datagram
+                    for (int c : dupCheck) {
+                        //we found a duplicate seqNum
+                        if (pack.getData()[0] == dupCheck.get(c)) {
+                            ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
+                            sock.send(ack);
+                        } else { //no duplicates found carry with normal routine
+                            //add new seqNum to duplicate check
+                            dupCheck.add((int) pack.getData()[0]);
+                        }
+                    }
                     for (int k = 0; k < 19; k++) { //loop through 19 bytes excluding the seqNum
                         //mult 19 by the seqNum to get the last place we buffered in data
                         //then add an offset of k to read ahead
                         rcvdBuffer[pack.getData()[0] * 19 + k] = pack.getData()[k + 1];
                     }
-		    
-		    //here we have successfully received a datagram packet
-		    //send a datagram back to client
-		    ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-		    sock.send(ack);
-		    
-                } else { //have we received the last datagram?
+
+                    //here we have successfully received a datagram packet
+                    //send a datagram back to client
+                    ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
+                    sock.send(ack);
+
+                } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
                     for (int n = pack.getData()[0] * 19; n < 479; n++) {
                         //read into the buffer the nth element from the end
                         rcvdBuffer[n] = pack.getData()[n - pack.getData()[0] * 19 + 1];
                     }
-		    break;
+                    break;
                 }
-                //send an ack message back to client
-                //ack = new DatagramPacket(ackMsg, ackMsg.length, pack.getAddress(), pack.getPort());
-                //sock.send(ack);
             }
-	} catch (SocketException ex) {
+        } catch (SocketException ex) {
             System.out.println(ex + "\nWriting buffer to file now.\n");
         } catch (IOException ex) {
             System.out.println(ex);

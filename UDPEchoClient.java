@@ -18,15 +18,16 @@ public class UDPEchoClient {
         int gatewayPort;
         int count = 0;
         int temp = 0;
+        int retryCounter = 0;
         int fileSize = 0;
 
         boolean done = false;
-	boolean ack = false;
+        boolean ack = false;
 
         DatagramPacket sendDatagramPacket;
-	DatagramPacket rcvdDatagramPacket = new DatagramPacket(new byte[20], 20);
-        
-	DatagramSocket clientSocket;
+        DatagramPacket rcvdDatagramPacket = new DatagramPacket(new byte[20], 20);
+
+        DatagramSocket clientSocket;
 
         byte sendBuffer[] = new byte[20];
 
@@ -58,51 +59,50 @@ public class UDPEchoClient {
                     fileSize++;
                 }
                 inputStream.close();
-		
+
                 byte buffer[] = new byte[fileSize];
-		
+
                 inputStream = new FileInputStream("CSE342.txt");
                 while ((temp = inputStream.read(buffer)) != -1) {
                 }
                 inputStream.close();
-		
+
                 count = (fileSize / 19) + ((fileSize % 19 == 0) ? 0 : 1);
-		
+
                 //fill sendBuffer
                 for (int i = 0; i < (count - 1); i++) {
+                    retryCounter = 0; //reset wait counter
                     sendBuffer[0] = seqNum++;
                     for (int j = 1; j < 20; j++) {
                         sendBuffer[j] = buffer[i * 19 + j - 1];
                     }
-                    
-		    //send first set of datagrams to gateway
+
+                    //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                     clientSocket.send(sendDatagramPacket);
-		    
-		    try{
-			clientSocket.setSoTimeout(15000);
-			//server must send back the same seqNum
-			while(!ack){
-			    
-			    //try to receive a message from server
-			    clientSocket.receive(rcvdDatagramPacket);
-			    
-			    //we got message back from server, indicating
-			    //receipt of datagram packet
-			    if(rcvdDatagramPacket.getData()[0] == seqNum-1){
-				ack = true;
-			    }else{ //we did not receive a message back from server
-				clientSocket.send(sendDatagramPacket);
-			    }
-			}
-		    }catch(SocketTimeoutException soex){
-			System.out.println("Did not receive ack from server " + soex);
-		    }
-		}
-		
-		//reset received message check flag
-		ack = false;
-		
+
+                    while (!ack) {
+
+                        //try to receive a message from server
+                        clientSocket.receive(rcvdDatagramPacket);
+
+                        //we got message back from server, indicating
+                        //receipt of datagram packet
+                        if (rcvdDatagramPacket.getData()[0] == (seqNum - 1)) {
+                            ack = true;
+                        } else if (retryCounter == 10) { //we did not receive a message back from server after waiting 10 times
+                            //gateway could have dropped initial packet, or the ack, regardless
+                            //we need to resend a datagram
+                            System.out.println("Resending Datagram: " + (seqNum - 1));
+                            clientSocket.send(sendDatagramPacket);
+                        }
+                        retryCounter++;
+                    }
+                }
+
+                //reset received message check flag
+                ack = false;
+
                 //clear out old send buffer
                 sendBuffer = new byte[20];
                 sendBuffer[0] = seqNum;
@@ -113,17 +113,17 @@ public class UDPEchoClient {
                 //send last packet to gateway to be forwarded to server
                 sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                 clientSocket.send(sendDatagramPacket);
-		
-		//wait to see if the server has received the last packet
-		while(!ack){
-		    clientSocket.receive(rcvdDatagramPacket);
-		    if(rcvdDatagramPacket.getData()[0] != seqNum){
-			ack = true;
-		    }else {
-			clientSocket.send(sendDatagramPacket);
-		    }
-		}
-		
+
+                //wait to see if the server has received the last packet
+                while (!ack) {
+                    clientSocket.receive(rcvdDatagramPacket);
+                    if (rcvdDatagramPacket.getData()[0] != seqNum) {
+                        ack = true;
+                    } else {
+                        clientSocket.send(sendDatagramPacket);
+                    }
+                }
+
             } catch (FileNotFoundException exf) {
                 System.out.println(exf);
             } catch (IOException ioex) {
