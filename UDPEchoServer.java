@@ -13,7 +13,8 @@ public class UDPEchoServer {
 
     public static void main(String[] args) {
 
-        DatagramSocket sock;
+        DatagramSocket serverSocket = null;
+
         DatagramPacket pack = new DatagramPacket(new byte[20], 20);
         DatagramPacket ack;
 
@@ -47,7 +48,7 @@ public class UDPEchoServer {
         }
 
         try {
-            sock = new DatagramSocket(serverPort);
+            serverSocket = new DatagramSocket(serverPort);
         } catch (SocketException e) {
             System.out.println(e);
             return;
@@ -60,15 +61,17 @@ public class UDPEchoServer {
         }
 
         try {
-            //sock.setSoTimeout(30000);
+            serverSocket.setSoTimeout(30000);
             while (true) {
-                sock.receive(pack); //get the packet from the Gateway
+                serverSocket.receive(pack); //get the packet from the Gateway
                 if (pack.getData()[0] != 25) { //we do not have the last datagram
                     for (int c : dupCheck) {
                         //we found a duplicate seqNum
                         if (pack.getData()[0] == dupCheck.get(c)) {
+                            //send an ACK back to client saying we already got this
+                            //this is needed in the event the gateway drops our original ACK
                             ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-                            sock.send(ack);
+                            serverSocket.send(ack);
                         } else { //no duplicates found carry with normal routine
                             //add new seqNum to duplicate check
                             dupCheck.add((int) pack.getData()[0]);
@@ -83,7 +86,7 @@ public class UDPEchoServer {
                     //here we have successfully received a datagram packet
                     //send a datagram back to client
                     ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-                    sock.send(ack);
+                    serverSocket.send(ack);
 
                 } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
@@ -91,7 +94,8 @@ public class UDPEchoServer {
                         //read into the buffer the nth element from the end
                         rcvdBuffer[n] = pack.getData()[n - pack.getData()[0] * 19 + 1];
                     }
-                    break;
+                    ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
+                    serverSocket.send(ack);
                 }
             }
         } catch (SocketException ex) {
@@ -102,6 +106,7 @@ public class UDPEchoServer {
             try {
                 fos.write(rcvdBuffer);
                 fos.close();
+                serverSocket.close();
             } catch (IOException iox) {
                 System.out.println(iox);
             }

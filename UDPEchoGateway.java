@@ -58,28 +58,30 @@ public class UDPEchoGateway {
         usrDropChance = Integer.valueOf(args[3]);
 
         while (true) {
-            dropChance = rand.nextInt(100) + 1;
-            //System.out.println("Drop chance: " + dropChance + "\n");
             try {
                 serverIPAddress = InetAddress.getByName(serverIP);
                 sock.receive(pack);
                 System.out.println("Receiving from " + pack.getAddress() + "\n");
+
+                dropChance = rand.nextInt(100) + 1;
+                //System.out.println("Drop chance: " + dropChance + "\n");
+
+                if (dropChance < usrDropChance) {
+                    continue;
+                }
+
                 if (!pack.getAddress().equals(serverIPAddress)) {
                     System.out.println("Receiving from client\n");
                     clientIPAddress = pack.getAddress();
                     clientPort = pack.getPort();
-                    if (dropChance < usrDropChance) { //check userdrop rate against randomly generated drop rate
-                        pack = new DatagramPacket(pack.getData(), pack.getData().length, serverIPAddress, serverPort);
-                        sock.send(pack);
-                        System.out.println("Packet sent to server: " + serverIPAddress + "\n");
-                    }
+                    pack = new DatagramPacket(pack.getData(), pack.getData().length, serverIPAddress, serverPort);
+                    sock.send(pack);
+                    System.out.println("Packet sent to server: " + serverIPAddress + "\n");
                 } else if (pack.getAddress().equals(serverIPAddress) && clientPort != 0) {
                     System.out.println("Receiving from server\n");
-                    if (dropChance < usrDropChance) { //check userdrop rate against randomly generated drop rate
-                        pack = new DatagramPacket(pack.getData(), pack.getData().length, clientIPAddress, clientPort);
-                        sock.send(pack);
-                        System.out.println("Packet sent to client: " + clientIPAddress + "\n");
-                    }
+                    pack = new DatagramPacket(pack.getData(), pack.getData().length, clientIPAddress, clientPort);
+                    sock.send(pack);
+                    System.out.println("Packet sent to client: " + clientIPAddress + "\n");
                 }
             } catch (Exception ex) {
                 System.out.println(ex);

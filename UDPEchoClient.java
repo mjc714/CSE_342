@@ -18,7 +18,6 @@ public class UDPEchoClient {
         int gatewayPort;
         int count = 0;
         int temp = 0;
-        int retryCounter = 0;
         int fileSize = 0;
 
         boolean done = false;
@@ -27,7 +26,7 @@ public class UDPEchoClient {
         DatagramPacket sendDatagramPacket;
         DatagramPacket rcvdDatagramPacket = new DatagramPacket(new byte[20], 20);
 
-        DatagramSocket clientSocket;
+        DatagramSocket clientSocket = null;
 
         byte sendBuffer[] = new byte[20];
 
@@ -71,7 +70,6 @@ public class UDPEchoClient {
 
                 //fill sendBuffer
                 for (int i = 0; i < (count - 1); i++) {
-                    retryCounter = 0; //reset wait counter
                     sendBuffer[0] = seqNum++;
                     for (int j = 1; j < 20; j++) {
                         sendBuffer[j] = buffer[i * 19 + j - 1];
@@ -82,27 +80,27 @@ public class UDPEchoClient {
                     clientSocket.send(sendDatagramPacket);
 
                     while (!ack) {
+                        //set socket to timeout in 10 seconds
+                        //after not receiving a message back from server
+                        clientSocket.setSoTimeout(1500);
+                        try {
+                            //try to receive a message from server
+                            clientSocket.receive(rcvdDatagramPacket);
 
-                        //try to receive a message from server
-                        clientSocket.receive(rcvdDatagramPacket);
-
-                        //we got message back from server, indicating
-                        //receipt of datagram packet
-                        if (rcvdDatagramPacket.getData()[0] == (seqNum - 1)) {
-                            ack = true;
-                        } else if (retryCounter == 10) { //we did not receive a message back from server after waiting 10 times
-                            //gateway could have dropped initial packet, or the ack, regardless
-                            //we need to resend a datagram
-                            System.out.println("Resending Datagram: " + (seqNum - 1));
+                            //we got message back from server, indicating
+                            //receipt of datagram packet
+                            if (rcvdDatagramPacket.getData()[0] == (seqNum - 1)) {
+                                ack = true;
+                            }
+                        } catch (SocketTimeoutException soex) {
+                            //resend the datagram again
                             clientSocket.send(sendDatagramPacket);
                         }
-                        retryCounter++;
                     }
+
+                    //reset received message check flag
+                    ack = false;
                 }
-
-                //reset received message check flag
-                ack = false;
-
                 //clear out old send buffer
                 sendBuffer = new byte[20];
                 sendBuffer[0] = seqNum;
@@ -116,25 +114,25 @@ public class UDPEchoClient {
 
                 //wait to see if the server has received the last packet
                 while (!ack) {
-                    clientSocket.receive(rcvdDatagramPacket);
-                    if (rcvdDatagramPacket.getData()[0] != seqNum) {
-                        ack = true;
-                    } else {
+                    clientSocket.setSoTimeout(1500);
+                    try {
+                        clientSocket.receive(rcvdDatagramPacket);
+                        if (rcvdDatagramPacket.getData()[0] == (seqNum)) {
+                            ack = true;
+                        }
+                    } catch (SocketTimeoutException ex) {
                         clientSocket.send(sendDatagramPacket);
                     }
                 }
-
             } catch (FileNotFoundException exf) {
                 System.out.println(exf);
             } catch (IOException ioex) {
                 System.out.println(ioex);
             }
-            //}//while
-
-            //close client socket
-            clientSocket.close();
         } catch (SocketException | UnknownHostException ex) {
             System.out.println("Socket Error: " + ex);
+        } finally {
+            clientSocket.close();
         }
     }
 }
