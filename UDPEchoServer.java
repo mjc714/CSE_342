@@ -19,7 +19,7 @@ public class UDPEchoServer {
         DatagramPacket ack;
 
         byte[] ackMsg = new byte[1];
-        byte[] rcvdBuffer = new byte[479];
+        byte[] rcvdBuffer = new byte[51080];
         ArrayList<Integer> dupCheck = new ArrayList<>(26);
 
         FileOutputStream fos = null;
@@ -65,7 +65,7 @@ public class UDPEchoServer {
             serverSocket.setSoTimeout(30000);
             while (true) {
                 serverSocket.receive(pack); //get the packet from the Gateway
-                if (pack.getData()[0] != 25) { //we do not have the last datagram
+                if (pack.getData()[0] != 2689) { //we do not have the last datagram
                     for (int c : dupCheck) {
                         //we found a duplicate seqNum
                         if (pack.getData()[0] == dupCheck.get(c)) {
@@ -91,7 +91,7 @@ public class UDPEchoServer {
 
                 } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
-                    for (int n = pack.getData()[0] * 19; n < 479; n++) {
+                    for (int n = pack.getData()[0] * 19; n < 51080; n++) {
                         //read into the buffer the nth element from the end
                         rcvdBuffer[n] = pack.getData()[n - pack.getData()[0] * 19 + 1];
                     }
