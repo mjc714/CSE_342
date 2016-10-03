@@ -53,7 +53,8 @@ public class UDPEchoClient {
             try {
 
                 //read file bytes into array
-                FileInputStream inputStream = new FileInputStream("CSE342.txt");
+                //FileInputStream inputStream = new FileInputStream("CSE342.txt");
+                FileInputStream inputStream = new FileInputStream("ascii.gif");
                 while ((temp = inputStream.read()) != -1) {
                     fileSize++;
                 }
@@ -61,7 +62,8 @@ public class UDPEchoClient {
 
                 byte buffer[] = new byte[fileSize];
 
-                inputStream = new FileInputStream("CSE342.txt");
+                //inputStream = new FileInputStream("CSE342.txt");
+                inputStream = new FileInputStream("ascii.gif");
                 while ((temp = inputStream.read(buffer)) != -1) {
                 }
                 inputStream.close();

@@ -55,7 +55,8 @@ public class UDPEchoServer {
         }
 
         try {
-            fos = new FileOutputStream("CSE342Recvd.txt", false);
+            //fos = new FileOutputStream("CSE342Recvd.txt", false);
+            fos = new FileOutputStream("asciiRcvd.gif");
         } catch (FileNotFoundException ex) {
             System.out.println(ex);
         }
