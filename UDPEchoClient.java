@@ -59,7 +59,7 @@ public class UDPEchoClient {
                     fileSize++;
                 }
                 inputStream.close();
-
+                //System.out.println(fileSize + "\n");
                 byte buffer[] = new byte[fileSize];
 
                 //inputStream = new FileInputStream("CSE342.txt");
@@ -82,9 +82,9 @@ public class UDPEchoClient {
                     clientSocket.send(sendDatagramPacket);
 
                     while (!ack) {
-                        //set socket to timeout in 10 seconds
+                        //set socket to timeout in 1.5 seconds
                         //after not receiving a message back from server
-                        clientSocket.setSoTimeout(1500);
+                        clientSocket.setSoTimeout(50);
                         try {
                             //try to receive a message from server
                             clientSocket.receive(rcvdDatagramPacket);
@@ -93,6 +93,7 @@ public class UDPEchoClient {
                             //receipt of datagram packet
                             if (rcvdDatagramPacket.getData()[0] == (seqNum - 1)) {
                                 ack = true;
+                                System.out.println("Received ACK: " + (seqNum - 1));
                             }
                         } catch (SocketTimeoutException soex) {
                             //resend the datagram again
@@ -116,11 +117,12 @@ public class UDPEchoClient {
 
                 //wait to see if the server has received the last packet
                 while (!ack) {
-                    clientSocket.setSoTimeout(1500);
+                    clientSocket.setSoTimeout(50);
                     try {
                         clientSocket.receive(rcvdDatagramPacket);
                         if (rcvdDatagramPacket.getData()[0] == (seqNum)) {
                             ack = true;
+                            System.out.println("Received ACK: " + seqNum);
                         }
                     } catch (SocketTimeoutException ex) {
                         clientSocket.send(sendDatagramPacket);

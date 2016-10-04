@@ -18,14 +18,11 @@ public class UDPEchoServer {
         DatagramPacket pack = new DatagramPacket(new byte[20], 20);
         DatagramPacket ack;
 
-        byte[] ackMsg = new byte[1];
         byte[] rcvdBuffer = new byte[51080];
-        ArrayList<Integer> dupCheck = new ArrayList<>(26);
+        ArrayList<Integer> dupCheck = new ArrayList<>(2689);
 
         FileOutputStream fos = null;
 
-        //buffer to store received bytes
-        //479 used as testing, implement robustness
         int seqNum = 0;
         int length = 0;
         int serverPort = 0;
@@ -65,7 +62,7 @@ public class UDPEchoServer {
             serverSocket.setSoTimeout(30000);
             while (true) {
                 serverSocket.receive(pack); //get the packet from the Gateway
-                if (pack.getData()[0] != 2689) { //we do not have the last datagram
+                if (pack.getData()[0] != 2688) { //we do not have the last datagram
                     for (int c : dupCheck) {
                         //we found a duplicate seqNum
                         if (pack.getData()[0] == dupCheck.get(c)) {
