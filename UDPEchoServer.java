@@ -19,12 +19,12 @@ public class UDPEchoServer {
         DatagramPacket ack;
 
         byte[] rcvdBuffer = new byte[51080];
-        ArrayList<Integer> dupCheck = new ArrayList<>(2689);
 
         FileOutputStream fos = null;
 
-        int seqNum = 0;
-        int length = 0;
+        byte seqChk = 0;
+
+        int count = 0;
         int serverPort = 0;
 
         boolean done = false;
@@ -37,6 +37,10 @@ public class UDPEchoServer {
 
         serverPort = (new Integer(args[0]));
         System.out.println("server port is " + serverPort + "\n");
+
+        /**
+         * Get the server IP to display to user for connecting to Gateway
+         */
         try {
             InetAddress serverIPAddress = InetAddress.getLocalHost();
             System.out.println("Server IP is " + serverIPAddress.getHostAddress() + "\n");
@@ -44,6 +48,9 @@ public class UDPEchoServer {
             System.out.println(e);
         }
 
+        /**
+         * Create a server socket
+         */
         try {
             serverSocket = new DatagramSocket(serverPort);
         } catch (SocketException e) {
@@ -51,6 +58,9 @@ public class UDPEchoServer {
             return;
         }
 
+        /**
+         * open file output stream to write to specified file
+         */
         try {
             //fos = new FileOutputStream("CSE342Recvd.txt", false);
             fos = new FileOutputStream("asciiRcvd.gif");
@@ -62,23 +72,24 @@ public class UDPEchoServer {
             serverSocket.setSoTimeout(30000);
             while (true) {
                 serverSocket.receive(pack); //get the packet from the Gateway
-                if (pack.getData()[0] != 2688) { //we do not have the last datagram
-                    for (int c : dupCheck) {
-                        //we found a duplicate seqNum
-                        if (pack.getData()[0] == dupCheck.get(c)) {
-                            //send an ACK back to client saying we already got this
-                            //this is needed in the event the gateway drops our original ACK
-                            ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-                            serverSocket.send(ack);
-                        } else { //no duplicates found carry with normal routine
-                            //add new seqNum to duplicate check
-                            dupCheck.add((int) pack.getData()[0]);
-                        }
-                    }
-                    for (int k = 0; k < 19; k++) { //loop through 19 bytes excluding the seqNum
-                        //mult 19 by the seqNum to get the last place we buffered in data
-                        //then add an offset of k to read ahead
-                        rcvdBuffer[pack.getData()[0] * 19 + k] = pack.getData()[k + 1];
+                //System.out.println("Recieved seq: " + pack.getData()[0]);
+                //System.out.println("Expecting seqChk: " + seqChk);
+                if (count != 2688) { //we do not have the last datagram
+
+                    //we found a duplicate seqNum
+//                    if (pack.getData()[0] != seqChk) {
+//                        send an ACK back to client saying we already got this
+//                        this is needed in the event the gateway drops our original ACK
+//                        ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
+//                        serverSocket.send(ack);
+//                    }
+                    /**
+                     * loop through 19 bytes excluding the seqNum, mult 19 by
+                     * the seqNum to get the last place we buffered in data then
+                     * add an offset of k to read ahead
+                     */
+                    for (int k = 0; k < 19; k++) {
+                        rcvdBuffer[count * 19 + k] = pack.getData()[k + 1];
                     }
 
                     //here we have successfully received a datagram packet
@@ -86,11 +97,18 @@ public class UDPEchoServer {
                     ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
                     serverSocket.send(ack);
 
+                    //update seqChk for the next datagram
+                    if (seqChk == 0) {
+                        seqChk = 1;
+                    } else {
+                        seqChk = 0;
+                    }
+                    //System.out.println("Sending ACK: " + pack.getData()[0]);
                 } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
-                    for (int n = pack.getData()[0] * 19; n < 51080; n++) {
+                    for (int n = count * 19; n < 51080; n++) {
                         //read into the buffer the nth element from the end
-                        rcvdBuffer[n] = pack.getData()[n - pack.getData()[0] * 19 + 1];
+                        rcvdBuffer[n] = pack.getData()[n - count * 19 + 1];
                     }
                     ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
                     serverSocket.send(ack);
@@ -99,7 +117,7 @@ public class UDPEchoServer {
         } catch (SocketException ex) {
             System.out.println(ex + "\nWriting buffer to file now.\n");
         } catch (IOException ex) {
-            System.out.println(ex);
+            System.out.println(ex + "\nWriting buffer to file now.\n");
         } finally { //after we receive all 26 datagrams, write to file and close the filestream
             try {
                 fos.write(rcvdBuffer);

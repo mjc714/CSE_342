@@ -17,6 +17,7 @@ public class UDPEchoClient {
 
         int gatewayPort;
         int count = 0;
+        int ackCount = 0;
         int temp = 0;
         int fileSize = 0;
 
@@ -30,7 +31,7 @@ public class UDPEchoClient {
 
         byte sendBuffer[] = new byte[20];
 
-        //sequence number of sent UDP datagram, 0-19, 20 datagrams should be sent
+        //sequence number of sent UDP datagram, 0|1, alternating depending on ACK receipt
         byte seqNum = 0;
 
         if ((args.length != 2)) {
@@ -72,7 +73,11 @@ public class UDPEchoClient {
 
                 //fill sendBuffer
                 for (int i = 0; i < (count - 1); i++) {
-                    sendBuffer[0] = seqNum++;
+                    if (seqNum == 0) {
+                        sendBuffer[0] = seqNum++;
+                    } else {//make seqNum = 1
+                        sendBuffer[0] = seqNum--;
+                    }
                     for (int j = 1; j < 20; j++) {
                         sendBuffer[j] = buffer[i * 19 + j - 1];
                     }
@@ -80,7 +85,7 @@ public class UDPEchoClient {
                     //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                     clientSocket.send(sendDatagramPacket);
-
+                    //System.out.println("Sent Datagram: " + seqNum);
                     while (!ack) {
                         //set socket to timeout in 1.5 seconds
                         //after not receiving a message back from server
@@ -91,9 +96,16 @@ public class UDPEchoClient {
 
                             //we got message back from server, indicating
                             //receipt of datagram packet
-                            if (rcvdDatagramPacket.getData()[0] == (seqNum - 1)) {
-                                ack = true;
-                                System.out.println("Received ACK: " + (seqNum - 1));
+                            if (seqNum == 0) {
+                                if (rcvdDatagramPacket.getData()[0] != seqNum) {
+                                    ack = true;
+                                    System.out.println("Received ACK: " + ackCount);
+                                }
+                            } else {
+                                if (rcvdDatagramPacket.getData()[0] != seqNum) {
+                                    ack = true;
+                                    System.out.println("Received ACK: " + ackCount);
+                                }
                             }
                         } catch (SocketTimeoutException soex) {
                             //resend the datagram again
@@ -103,7 +115,16 @@ public class UDPEchoClient {
 
                     //reset received message check flag
                     ack = false;
+                    ackCount++;
                 }
+
+                //update the seqChk
+                if (seqNum == 0) {
+                    sendBuffer[0] = seqNum++;
+                } else {//make seqNum = 1
+                    sendBuffer[0] = seqNum--;
+                }
+
                 //clear out old send buffer
                 sendBuffer = new byte[20];
                 sendBuffer[0] = seqNum;
@@ -122,7 +143,7 @@ public class UDPEchoClient {
                         clientSocket.receive(rcvdDatagramPacket);
                         if (rcvdDatagramPacket.getData()[0] == (seqNum)) {
                             ack = true;
-                            System.out.println("Received ACK: " + seqNum);
+                            System.out.println("Received ACK: " + (ackCount + 1));
                         }
                     } catch (SocketTimeoutException ex) {
                         clientSocket.send(sendDatagramPacket);
