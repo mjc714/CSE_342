@@ -71,24 +71,24 @@ public class UDPEchoServer {
         try {
             serverSocket.setSoTimeout(30000);
             while (true) {
-                serverSocket.receive(pack); //get the packet from the Gateway
-                //System.out.println("Recieved seq: " + pack.getData()[0]);
-                //System.out.println("Expecting seqChk: " + seqChk);
+                serverSocket.receive(pack); //get the packet from the Gateway               
                 if (count != 2688) { //we do not have the last datagram
 
                     /**
-                     * we found a duplicate seqNum send an ACK back to client
+                     * we found a repeat seqNum, send an ACK back to client
                      * saying we already got this; this is needed in the event
-                     * the gateway drops our original ACK
+                     * the gateway drops our original ACK; skip to the next
+                     * iteration, not incrementing count
                      */
-                    if (pack.getData()[0] == seqChk) {
+                    if (pack.getData()[0] != seqChk) {
                         ack = new DatagramPacket(pack.getData(), pack.getData().length,
                                 pack.getAddress(), pack.getPort());
                         serverSocket.send(ack);
+                        continue;
                     }
                     /**
-                     * loop through 19 bytes excluding the seqNum, mult 19 by
-                     * the seqNum to get the last place we buffered in data then
+                     * loop through 19 bytes excluding the seqChk, mult 19 by
+                     * the seqChk to get the last place we buffered in data then
                      * add an offset of k to read ahead
                      */
                     for (int k = 0; k < 19; k++) {
@@ -106,7 +106,6 @@ public class UDPEchoServer {
                     } else {
                         seqChk = 0;
                     }
-                    //System.out.println("Sending ACK: " + pack.getData()[0]);
                 } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
                     for (int n = count * 19; n < 51080; n++) {
@@ -116,6 +115,7 @@ public class UDPEchoServer {
                     ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
                     serverSocket.send(ack);
                 }
+                count++;
             }
         } catch (SocketException ex) {
             System.out.println(ex + "\nWriting buffer to file now.\n");

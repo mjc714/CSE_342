@@ -60,7 +60,6 @@ public class UDPEchoClient {
                     fileSize++;
                 }
                 inputStream.close();
-                //System.out.println(fileSize + "\n");
                 byte buffer[] = new byte[fileSize];
 
                 //inputStream = new FileInputStream("CSE342.txt");
@@ -85,7 +84,6 @@ public class UDPEchoClient {
                     //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                     clientSocket.send(sendDatagramPacket);
-                    //System.out.println("Sent Datagram: " + seqNum);
                     while (!ack) {
                         //set socket to timeout in 1.5 seconds
                         //after not receiving a message back from server
