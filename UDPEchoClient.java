@@ -97,6 +97,7 @@ public class UDPEchoClient {
                             //we got message back from server, indicating
                             //receipt of datagram packet
                             if (seqNum == 0) {
+                                //not quite sure why we test != to work??
                                 if (rcvdDatagramPacket.getData()[0] != seqNum) {
                                     ack = true;
                                     System.out.println("Received ACK: " + ackCount);

@@ -76,13 +76,16 @@ public class UDPEchoServer {
                 //System.out.println("Expecting seqChk: " + seqChk);
                 if (count != 2688) { //we do not have the last datagram
 
-                    //we found a duplicate seqNum
-//                    if (pack.getData()[0] != seqChk) {
-//                        send an ACK back to client saying we already got this
-//                        this is needed in the event the gateway drops our original ACK
-//                        ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-//                        serverSocket.send(ack);
-//                    }
+                    /**
+                     * we found a duplicate seqNum send an ACK back to client
+                     * saying we already got this; this is needed in the event
+                     * the gateway drops our original ACK
+                     */
+                    if (pack.getData()[0] == seqChk) {
+                        ack = new DatagramPacket(pack.getData(), pack.getData().length,
+                                pack.getAddress(), pack.getPort());
+                        serverSocket.send(ack);
+                    }
                     /**
                      * loop through 19 bytes excluding the seqNum, mult 19 by
                      * the seqNum to get the last place we buffered in data then
