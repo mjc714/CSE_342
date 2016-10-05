@@ -21,6 +21,10 @@ public class UDPEchoClient {
         int temp = 0;
         int fileSize = 0;
 
+        int snMax = 0;
+        int snMin = 0;
+        int rn = 0;
+
         boolean done = false;
         boolean ack = false;
 
@@ -72,15 +76,15 @@ public class UDPEchoClient {
 
                 //fill sendBuffer
                 for (int i = 0; i < (count - 1); i++) {
-                    if (seqNum == 0) {
-                        sendBuffer[0] = seqNum++;
-                    } else {//make seqNum = 1
-                        sendBuffer[0] = seqNum--;
-                    }
+//                    if (seqNum == 0) {
+//                        sendBuffer[0] = seqNum++;
+//                    } else {//make seqNum = 1
+//                        sendBuffer[0] = seqNum--;
+//                    }
                     for (int j = 1; j < 20; j++) {
                         sendBuffer[j] = buffer[i * 19 + j - 1];
                     }
-
+                    
                     //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                     clientSocket.send(sendDatagramPacket);
@@ -118,12 +122,11 @@ public class UDPEchoClient {
                 }
 
                 //update the seqChk
-                if (seqNum == 0) {
-                    sendBuffer[0] = seqNum++;
-                } else {//make seqNum = 1
-                    sendBuffer[0] = seqNum--;
-                }
-
+//                if (seqNum == 0) {
+//                    sendBuffer[0] = seqNum++;
+//                } else {//make seqNum = 1
+//                    sendBuffer[0] = seqNum--;
+//                }
                 //clear out old send buffer
                 sendBuffer = new byte[20];
                 sendBuffer[0] = seqNum;

@@ -24,6 +24,8 @@ public class UDPEchoServer {
 
         byte seqChk = 0;
 
+        int rn = 0;
+
         int count = 0;
         int serverPort = 0;
 
@@ -75,16 +77,14 @@ public class UDPEchoServer {
                 if (count != 2688) { //we do not have the last datagram
 
                     /**
-                     * we found a repeat seqNum, send an ACK back to client
-                     * saying we already got this; this is needed in the event
-                     * the gateway drops our original ACK; skip to the next
-                     * iteration, not incrementing count
+                     * we have received a good packet from the Client where sn =
+                     * rn, send an ACK back and rn++ for next expected frame
                      */
-                    if (pack.getData()[0] != seqChk) {
+                    if (pack.getData()[0] == rn) {
                         ack = new DatagramPacket(pack.getData(), pack.getData().length,
                                 pack.getAddress(), pack.getPort());
                         serverSocket.send(ack);
-                        continue;
+                        rn++;
                     }
                     /**
                      * loop through 19 bytes excluding the seqChk, mult 19 by
@@ -97,15 +97,14 @@ public class UDPEchoServer {
 
                     //here we have successfully received a datagram packet
                     //send a datagram back to client
-                    ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
-                    serverSocket.send(ack);
-
+//                    ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
+//                    serverSocket.send(ack);
                     //update seqChk for the next datagram
-                    if (seqChk == 0) {
-                        seqChk = 1;
-                    } else {
-                        seqChk = 0;
-                    }
+//                    if (seqChk == 0) {
+//                        seqChk = 1;
+//                    } else {
+//                        seqChk = 0;
+//                    }
                 } else { //do we have the last datagram?
                     //we're at the last datagram so read from 1 + the last index until the end of the file
                     for (int n = count * 19; n < 51080; n++) {
