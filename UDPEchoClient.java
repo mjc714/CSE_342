@@ -23,6 +23,7 @@ public class UDPEchoClient {
 
         int snMax = 0;
         int snMin = 0;
+        int sn = 0;
         int rn = 0;
 
         boolean done = false;
@@ -74,17 +75,15 @@ public class UDPEchoClient {
 
                 count = (fileSize / 19) + ((fileSize % 19 == 0) ? 0 : 1);
 
+                /**
+                 * TODO: 
+                 */
                 //fill sendBuffer
                 for (int i = 0; i < (count - 1); i++) {
-//                    if (seqNum == 0) {
-//                        sendBuffer[0] = seqNum++;
-//                    } else {//make seqNum = 1
-//                        sendBuffer[0] = seqNum--;
-//                    }
                     for (int j = 1; j < 20; j++) {
                         sendBuffer[j] = buffer[i * 19 + j - 1];
                     }
-                    
+
                     //send first set of datagrams to gateway
                     sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
                     clientSocket.send(sendDatagramPacket);
@@ -98,17 +97,18 @@ public class UDPEchoClient {
 
                             //we got message back from server, indicating
                             //receipt of datagram packet
-                            if (seqNum == 0) {
-                                //not quite sure why we test != to work??
-                                if (rcvdDatagramPacket.getData()[0] != seqNum) {
-                                    ack = true;
-                                    System.out.println("Received ACK: " + ackCount);
-                                }
-                            } else {
-                                if (rcvdDatagramPacket.getData()[0] != seqNum) {
-                                    ack = true;
-                                    System.out.println("Received ACK: " + ackCount);
-                                }
+                            if (rcvdDatagramPacket.getData()[0] > snMin) {
+                                snMin = rcvdDatagramPacket.getData()[0];
+                            }
+                            /**
+                             * if snMin < snMax and no frame is in transmission
+                             * set sn bewteeen snMin and snMax transmit sn
+                             */
+                            if (snMin < snMax) {
+                                sn = snMin + 1;
+
+                                sendDatagramPacket = new DatagramPacket(sendBuffer, sendBuffer.length, gatewayIPAddress, gatewayPort);
+                                clientSocket.send(sendDatagramPacket);
                             }
                         } catch (SocketTimeoutException soex) {
                             //resend the datagram again
@@ -120,13 +120,6 @@ public class UDPEchoClient {
                     ack = false;
                     ackCount++;
                 }
-
-                //update the seqChk
-//                if (seqNum == 0) {
-//                    sendBuffer[0] = seqNum++;
-//                } else {//make seqNum = 1
-//                    sendBuffer[0] = seqNum--;
-//                }
                 //clear out old send buffer
                 sendBuffer = new byte[20];
                 sendBuffer[0] = seqNum;
