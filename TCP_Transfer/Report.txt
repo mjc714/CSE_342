@@ -1,7 +1,0 @@
-TCP transfer is faster than Stop and Wait.
-Stop and Wait uses UDP which does not guarantee
-a file transfer. So throughput times could wildly vary
-given the chance of drop. TCP provides reliable transfer.
-
-For Stop and Wait with a 10% drop chance: 1380.
-For TCP: 51080.
