@@ -1,6 +1,8 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * UDPEchoServer that receives a n datagram packets from the gateway which
@@ -28,9 +30,9 @@ public class UDPEchoServer {
 
         boolean done = false;
 
-        if (args.length != 2) {
+        if (args.length != 1) {
             System.out.println("args.length is " + args.length + "\n");
-            System.out.println("Usage:  %s <UDP SERVER PORT> <Window Size>\n");
+            System.out.println("Usage:  %s <UDP SERVER PORT>, <UDP SERVER IP>\n");
             System.exit(1);
         }
 
@@ -66,7 +68,7 @@ public class UDPEchoServer {
         } catch (FileNotFoundException ex) {
             System.out.println(ex);
         }
-
+        long start = System.nanoTime();
         try {
             serverSocket.setSoTimeout(30000);
             while (true) {
@@ -85,23 +87,21 @@ public class UDPEchoServer {
                         serverSocket.send(ack);
                         continue;
                     }
-
                     /**
-                     * loop through 19 bytes excluding the seqChk, multiply 19
-                     * by the seqChk to get the last place we buffered in data
-                     * then add an offset of k to read ahead
+                     * loop through 19 bytes excluding the seqChk, mult 19 by
+                     * the seqChk to get the last place we buffered in data then
+                     * add an offset of k to read ahead
                      */
                     for (int k = 0; k < 19; k++) {
                         rcvdBuffer[count * 19 + k] = pack.getData()[k + 1];
                     }
-                    /**
-                     * here we have successfully received a datagram packet send
-                     * a datagram back to client
-                     */
+
+                    //here we have successfully received a datagram packet
+                    //send a datagram back to client
                     ack = new DatagramPacket(pack.getData(), pack.getData().length, pack.getAddress(), pack.getPort());
                     serverSocket.send(ack);
 
-                    //update seqChk for the next datagram  
+                    //update seqChk for the next datagram
                     if (seqChk == 0) {
                         seqChk = 1;
                     } else {
@@ -126,6 +126,12 @@ public class UDPEchoServer {
             try {
                 fos.write(rcvdBuffer);
                 fos.close();
+                long end = System.nanoTime();
+                long elapsedTime = end - start;
+                elapsedTime = TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+                elapsedTime -= 30;
+                long tp = (51080 / elapsedTime);
+                System.out.println("Stop and Wait Throughput: " + tp);
                 serverSocket.close();
             } catch (IOException iox) {
                 System.out.println(iox);
